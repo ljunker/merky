@@ -1,0 +1,27 @@
+POST http://{{host}}/api/merk
+Content-Type: application/json
+
+{
+  "text": "Jetzt noch ne gaaaanz andere Notiz"
+}
+
+###
+
+DELETE http://{{host}}/api/merk
+Content-Type: application/json
+
+{
+  "id": "PPxADl1UaVQ"
+}
+
+###
+
+GET http://{{host}}/api/merk
+Accept: application/json
+
+###
+
+GET http://{{host}}/api/merk/YKwUnyP0hkQ
+Accept: application/json
+
+###

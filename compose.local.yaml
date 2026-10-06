@@ -1,0 +1,11 @@
+services:
+  pasty:
+    build: .
+    container_name: merky
+    restart: unless-stopped
+
+    ports:
+      - "41238:8000"
+
+    volumes:
+      - ./data/merk.db:/app/merk.db

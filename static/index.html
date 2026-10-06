@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Merks</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    main {
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    #count {
+      color: #888;
+      font-size: 14px;
+    }
+
+    #merks {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .merk {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      background: white;
+      border-radius: 12px;
+      padding: 16px 18px;
+
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+      cursor: pointer;
+      transition: transform 0.15s,
+      box-shadow 0.15s;
+    }
+
+    .merk:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .merk-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .content {
+      font-size: 17px;
+      margin-bottom: 8px;
+
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      display: flex;
+      gap: 12px;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .id {
+      font-family: monospace;
+    }
+
+    .delete {
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+
+      font-size: 20px;
+      padding: 8px 10px;
+
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .delete:hover {
+      background: #ffe5e5;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+
+    /* Dialog */
+
+    dialog {
+      width: min(600px, calc(100% - 40px));
+      border: none;
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(3px);
+    }
+
+    .dialog-content {
+      padding: 24px;
+    }
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .dialog-header h2 {
+      margin: 0;
+    }
+
+    .close {
+      border: none;
+      background: #eee;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    #detail-content {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    #detail-meta {
+      margin-top: 24px;
+      color: #888;
+      font-size: 13px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+
+<main>
+  <header>
+    <h1>Merks</h1>
+    <span id="count"></span>
+  </header>
+
+  <div id="merks"></div>
+</main>
+
+
+<dialog id="details">
+  <div class="dialog-content">
+
+    <div class="dialog-header">
+      <h2>Merk</h2>
+      <button class="close" onclick="details.close()">×</button>
+    </div>
+
+    <div id="detail-content"></div>
+    <div id="detail-meta"></div>
+
+  </div>
+</dialog>
+
+
+<script>
+  const API = "/api/merk";
+
+  const merksElement = document.getElementById("merks");
+  const countElement = document.getElementById("count");
+  const details = document.getElementById("details");
+
+  function formatDate(timestamp) {
+    return new Date(timestamp * 1000).toLocaleString("de-DE", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    });
+  }
+
+  async function loadMerks() {
+    const response = await fetch(API);
+    const merks = await response.json();
+
+    merksElement.innerHTML = "";
+
+    countElement.textContent =
+        `${merks.length} ${merks.length === 1 ? "Eintrag" : "Einträge"}`;
+
+    if (merks.length === 0) {
+      merksElement.innerHTML = `
+                <div class="empty">
+                    Keine Merks vorhanden.
+                </div>
+            `;
+      return;
+    }
+
+    for (const merk of merks) {
+      const element = document.createElement("div");
+      element.className = "merk";
+
+      element.innerHTML = `
+                <div class="merk-content">
+                    <div class="content"></div>
+
+                    <div class="meta">
+                        <span>${formatDate(merk.created_at)}</span>
+                        <span class="id">${merk.id}</span>
+                    </div>
+                </div>
+
+                <button class="delete" title="Löschen">
+                    🗑️
+                </button>
+            `;
+
+      // Kein innerHTML für den eigentlichen Content,
+      // damit HTML im Merk nicht ausgeführt wird.
+      element.querySelector(".content").textContent = merk.content;
+
+      element.addEventListener("click", () => {
+        loadMerk(merk.id);
+      });
+
+      element.querySelector(".delete")
+      .addEventListener("click", async event => {
+        event.stopPropagation();
+        await deleteMerk(merk.id);
+      });
+
+      merksElement.appendChild(element);
+    }
+  }
+
+  async function loadMerk(id) {
+    const response = await fetch(`${API}/${id}`);
+
+    if (!response.ok) {
+      return;
+    }
+
+    const merk = await response.json();
+
+    document.getElementById("detail-content").textContent =
+        merk.content;
+
+    document.getElementById("detail-meta").textContent =
+        `${formatDate(merk.created_at)} · ${merk.id}`;
+
+    details.showModal();
+  }
+
+  async function deleteMerk(id) {
+    const response = await fetch(API, {
+      method: "DELETE",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        id: id
+      })
+    });
+
+    if (response.ok) {
+      await loadMerks();
+    }
+  }
+
+  loadMerks();
+</script>
+
+</body>
+</html>
