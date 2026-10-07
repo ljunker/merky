@@ -86,6 +86,29 @@ def get_by_id(id: str):
     return dict(merk)
 
 
+class UpdateRequest(BaseModel):
+  content: str
+
+
+@app.put("/api/merk/{id}")
+def update_merk(id: str, request: UpdateRequest):
+  with get_db() as db:
+    db.execute(
+        """
+        UPDATE merks
+        SET content = ?
+        WHERE id = ?
+        """,
+        (request.content, id)
+    )
+    db.commit()
+
+  return {
+    "id": id,
+    "content": request.content
+  }
+
+
 class MerkRequest(BaseModel):
   text: str
 

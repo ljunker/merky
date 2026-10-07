@@ -9,4 +9,5 @@ wheels/
 # Virtual environments
 .venv
 .idea
-data
+merk.db
+data/merk.db

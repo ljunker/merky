@@ -11,7 +11,7 @@ DELETE http://{{host}}/api/merk
 Content-Type: application/json
 
 {
-  "id": "PPxADl1UaVQ"
+  "id": "{{current-merk}}"
 }
 
 ###
@@ -21,7 +21,16 @@ Accept: application/json
 
 ###
 
-GET http://{{host}}/api/merk/YKwUnyP0hkQ
+GET http://{{host}}/api/merk/{{current-merk}}
 Accept: application/json
+
+###
+
+PUT http://{{host}}/api/merk/{{current-merk}}
+Content-Type: application/json
+
+{
+  "content": "Neuer Text"
+}
 
 ###

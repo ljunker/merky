@@ -154,17 +154,55 @@
     }
 
     #detail-content {
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      font-size: 18px;
+      width: 100%;
+      min-height: 200px;
+      resize: vertical;
+
+      border: 1px solid #ddd;
+      border-radius: 10px;
+
+      padding: 12px;
+
+      font: inherit;
+      font-size: 17px;
       line-height: 1.5;
     }
 
+    #detail-content:focus {
+      outline: none;
+      border-color: #888;
+    }
+
+    .detail-actions {
+      margin-top: 16px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
     #detail-meta {
-      margin-top: 24px;
       color: #888;
-      font-size: 13px;
+      font-size: 12px;
       font-family: monospace;
+    }
+
+    #save-button {
+      border: none;
+      border-radius: 8px;
+
+      background: #1d1d1f;
+      color: white;
+
+      padding: 10px 18px;
+
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #save-button:hover {
+      background: #444;
     }
   </style>
 </head>
@@ -189,8 +227,12 @@
       <button class="close" onclick="details.close()">×</button>
     </div>
 
-    <div id="detail-content"></div>
-    <div id="detail-meta"></div>
+    <textarea id="detail-content"></textarea>
+
+    <div class="detail-actions">
+      <div id="detail-meta"></div>
+      <button id="save-button" onclick="saveMerk()">Speichern</button>
+    </div>
 
   </div>
 </dialog>
@@ -202,6 +244,7 @@
   const merksElement = document.getElementById("merks");
   const countElement = document.getElementById("count");
   const details = document.getElementById("details");
+  let currentMerkId = null;
 
   function formatDate(timestamp) {
     return new Date(timestamp * 1000).toLocaleString("de-DE", {
@@ -274,13 +317,45 @@
 
     const merk = await response.json();
 
-    document.getElementById("detail-content").textContent =
+    currentMerkId = merk.id;
+
+    document.getElementById("detail-content").value =
         merk.content;
 
     document.getElementById("detail-meta").textContent =
         `${formatDate(merk.created_at)} · ${merk.id}`;
 
     details.showModal();
+  }
+
+  async function saveMerk() {
+    if (!currentMerkId) {
+      return;
+    }
+
+    const content =
+        document.getElementById("detail-content").value;
+
+    const response = await fetch(`${API}/${currentMerkId}`, {
+      method: "PUT",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        content: content
+      })
+    });
+
+    if (!response.ok) {
+      alert("Speichern fehlgeschlagen");
+      return;
+    }
+
+    await loadMerks();
+
+    details.close();
   }
 
   async function deleteMerk(id) {
